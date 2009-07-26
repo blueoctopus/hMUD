@@ -1,0 +1,753 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!--
+/*
+ * hMUD v0.2
+ */
+
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2009 Alonso Andres
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+/*
+ * Originally created for DeBo MUD (debomud.org 4000)
+ */
+
+/*
+ * Icons from http://free.imil.to/
+ */
+-->
+<html>
+<head>
+<title>hMUD (loading...)</title>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<script>var iAmIE = function() { return false; }</script>
+<!--[if IE]><script>var iAmIE = function() { return true; }</script><![endif]-->
+<script src="swfobject/swfobject.js"></script>
+<script>
+function loadFlashBridge() {
+    swfobject.embedSWF(
+        "client/hmud-bridge.swf",
+        "hMUDClientPlugin",
+        "1",
+        "1",
+        "9.0.0",
+        "expressInstall.swf",
+        false,
+        { allowscriptaccess: "always", wmode: "transparent" },
+        false
+    );
+};
+</script>
+<!-- Styles that apply to the system interface go here -->
+<style type="text/css" id="uiStyle">
+html {overflow:hidden; }
+form {margin:0;padding:0;}
+body { margin:0; }
+#hMUDClientPlugin { position: absolute; visibility: hidden; }
+#output {
+    border: 10px outset #FFF;
+}
+.cmdline {
+    color: #C0C0C0;
+    background-color: #333;
+    padding:8px 0 0 15px;
+    border:0;
+    margin: 0;
+    height: 23px;
+}
+#iconsBar img { background-color: #333; cursor: pointer; vertical-align: top; }
+#iconsBar img:hover { background-color: #666; }
+#cmdline-swap { display: none; }
+#submit { position:absolute; top: -1000px; left: -1000px; }
+#logSave { width: 60%; height: 80%; display: none; position: absolute; top: 50px; left: 50px; }
+.iconMenu { display: none; background-color: #999; position: absolute; padding:10px; color: #FFF; white-space: nowrap; }
+.iconMenu ul { list-style-type: none; margin: 0; padding: 0; }
+.iconMenu li { cursor: pointer; }
+.iconMenu li:hover { background-color: #FFF; color: #444; }
+</style>
+
+<!-- Styles that apply to the raw log go here -->
+<style type="text/css" id="logStyle">
+html { background-color: #000; color: #C0C0C0; }
+* {
+    font-family: "Fixedsys Excelsior 3.01", "Fixedsys Excelsior 3.00", "Fixedsys", "Courier New", "Lucida Console", monospace;
+    font-size: 16px;
+}
+#output {
+    overflow: auto;
+    padding:10px;
+    margin:0;
+
+    white-space: pre-wrap;    /* css-3 */
+    white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */
+    white-space: -pre-wrap;   /* Opera 4-6 */
+    white-space: -o-pre-wrap; /* Opera 7 */
+    word-wrap: break-word;    /* Internet Explorer 5.5+ */
+}
+.loading { color: #FFF; }
+.loaded { color: #00F; }
+.connecting { color: #FFF; }
+.connected { color: #00F; }
+.disconnected { color: #F00; }
+
+/*
+ * ANSI Colors
+ */
+b { font-weight: normal; }
+
+b.b { color: #FFFFFF; }					/* Bold		*/
+b.r { color: #C0C0C0; background-color: #000000; }	/* Default	*/
+b.u { text-decoration: underline; }			/* Underline	*/
+b.l { text-decoration: blink; border: 1px dashed; }	/* Blink	*/
+
+/* Dark */
+b.c30 { color: #222222; }				/* Black (what?)*/
+b.c31 { color: #800000; }				/* Red		*/
+b.c32 { color: #008000; }				/* Green	*/
+b.c33 { color: #808000; }				/* Yellow	*/
+b.c34 { color: #000080; }				/* Blue		*/
+b.c35 { color: #800080; }				/* Magenta	*/
+b.c36 { color: #008080; }				/* Cyan		*/
+b.c37 { color: #C0C0C0; }				/* Grey		*/
+
+/* Bold */
+b.bc30 { color: #808080; }				/* Grey		*/
+b.bc31 { color: #FF0000; }				/* Red		*/
+b.bc32 { color: #00FF00; }				/* Green	*/
+b.bc33 { color: #FFFF00; }				/* Yellow	*/
+b.bc34 { color: #0000FF; }				/* Blue		*/
+b.bc35 { color: #FF00FF; }				/* Magenta	*/
+b.bc36 { color: #00FFFF; }				/* Cyan		*/
+b.bc37 { color: #FFFFFF; }				/* White	*/
+
+/* Background */
+b.c40 { background-color: #000000; }			/* Black	*/
+b.c41 { background-color: #800000; }			/* Red		*/
+b.c42 { background-color: #008000; }			/* Green	*/
+b.c43 { background-color: #808000; }			/* Yellow	*/
+b.c44 { background-color: #000080; }			/* Blue		*/
+b.c45 { background-color: #800080; }			/* Magenta	*/
+b.c46 { background-color: #008080; }			/* Cyan		*/
+b.c47 { background-color: #C0C0C0; }			/* Grey		*/
+</style>
+<script src="messages.js"></script>
+<script src="config.js"></script>
+<script>
+var m = hMUDMessages;
+var c = hMUDConf;
+</script>
+<script>
+var hMUDClient = {
+
+    canConnect: false,
+
+    echo: true,
+    focus: true,
+
+    /* current line in output window
+       for counting and limiting lines in the output window) */
+    currline: null,
+    lineCount: 0,
+
+    connectIId: null,
+    connectingIId: null,
+
+    cmdHistory: [],
+    cmdHistoryPointer: -1, // -1 means the user is out of the history navigation
+
+    icons: [["i-save", "Treasure-icon.gif", saveLog],
+            ["i-clear", "Rune-icon.gif", clearScreen],
+            ["i-conn-on", "Button-icon.gif", connectDisconnect],
+            ["i-conn-off", "Button-icon-off.gif", connectDisconnect]],
+    numIconsVisible: 3,
+    iconWidth: 32,
+    iConnOn: null,
+    iConnOff: null,
+    connState: null,
+
+    brigde: null,
+
+    init: function () {
+        /* minimal setup to be able to use screenWrite() */
+        this.output         = document.getElementById("output");
+        this.createNewLine();
+        this.screenWrite(m.loadingClient);
+
+        this.initCmdLine();
+
+        document.title = m.windowTitle;
+
+        document.getElementById("logSave").style.display = "none";
+        document.getElementById("clearScreenMenu").style.display = "none";
+        document.getElementById("connectionMenu").style.display = "none";
+
+        /* Default icons */
+        var ib = document.getElementById("iconsBar");
+        for (var i = 0; i < hMUDClient.icons.length; ++i) {
+            var icon = document.createElement("img");
+            icon.id = hMUDClient.icons[i][0];
+            icon.src = hMUDClient.icons[i][1];
+            icon.onclick = hMUDClient.icons[i][2];
+            if (icon.id == "i-conn-on")
+                icon.style.display = "none";
+            ib.appendChild(icon);
+        }
+
+        this.iConnOn  = document.getElementById("i-conn-on");
+        this.iConnOff = document.getElementById("i-conn-off");
+
+        /* try to connect when all the interface is ready */
+        this.setConnectionState("connecting");
+        this.connectIId = setInterval(function(){hMUDClient.tryToConnect();}, 100);
+    },
+
+    connect: function() {
+        this.proxy.connect(c.host, c.port, c.policyPort);
+    },
+
+    disconnect: function() {
+        this.proxy.close();
+        // the close event is only dispatched when the server closes the
+        // connection, in this case, the client is closing the connection, so
+        // we should do it here
+        this.disconnected();
+    },
+
+    initCmdLine: function () {
+        this.cmdline = document.getElementById("cmdline");
+        this.cmdline.onfocus = function() { hMUDClient.setFocus(true); }
+        this.cmdline.focus();
+    },
+
+    tryToConnect: function () {
+        if (this.canConnect) {
+            this.connect();
+            clearInterval(hMUDClient.connectIId);
+        }
+    },
+
+    createNewLine: function () {
+        var b = document.createElement("b");
+        b.className = "line";
+        this.currline = b;
+        this.output.appendChild(this.currline);
+        this.updateLineCount(this.lineCount + 1);
+    },
+
+    scrollBottom: function () {
+        this.output.scrollTop = this.output.scrollHeight;
+    },
+
+    /* add <str> to output window (HTML format) */
+    screenWrite: function (str) {
+        /*
+         * Line breaks "\n" will guide us through line counting, so that let's
+         * guarantee they are where they should be .
+         */
+        str = str.replace(/(<br>)([^\n]|$)/g, "$1\n$2");
+
+        var lastIndex = -1;
+        var i;
+
+        while ((i = str.indexOf("\n", lastIndex + 1)) != -1) {
+            /* here we get rid of the \n (i instead of i + i), not necessary
+             * anymore since we got <br>'s */
+            this.currline.innerHTML += str.substring(lastIndex + 1, i);
+            this.createNewLine();
+            lastIndex = i;
+        }
+
+        /* let's handle cases where there is more text after the last line (and
+         * it's not a full line! Otherwise it would be handled in the above) */
+        if ((lastIndex + 1) < str.length) {
+            this.currline.innerHTML += str.substring(lastIndex + 1, str.length);
+        }
+
+        startTitleAlert();
+        this.scrollBottom();
+    },
+
+    /* <l> can be "all", "half" or an integer. If it's an int, it means
+       preserve last <l> lines. */
+    clearScreen: function(l) {
+        if (l == "all") {
+            this.output.innerHTML = "";
+            this.updateLineCount(0);
+            this.createNewLine();
+            return;
+        }
+
+        var cLines;
+        if (l == "half")
+            cLines = (this.lineCount / 2) | 0; // (int) cast
+        else if (this.lineCount >= l)
+            cLines = this.lineCount - l;
+        else
+            return;
+
+        for (var i = 0; i < cLines && this.output.firstChild; ++i)
+            this.output.removeChild(this.output.firstChild);
+
+        this.updateLineCount(this.lineCount - cLines);
+    },
+
+    updateLineCount: function(l) { 
+        this.lineCount = l | 0; // yes, this casts to an integer...
+        document.getElementById("numLinesInScreen").innerHTML = this.lineCount;
+        return this.lineCount;
+    },
+
+    /* send a command to MUD */
+    command: function (cmd) {
+        if (this.echo) {
+            hMUDClient.screenWrite(cmd + "<br>");
+            this.addToHistory(cmd);
+        }
+        this.proxy.command(cmd);
+    },
+
+    saveLog: function (log) {
+        this.proxy.saveLog(log);
+    },
+    /*
+     * History navigation
+     */
+
+    addToHistory: function(cmd) {
+        // adding to history always clears the pointer
+        this.cmdHistoryPointer = -1;
+
+        if (cmd.length < c.historyMinLength)
+            return;
+
+        /* if the command is the same as the previous one, let's not repeat it in the history */
+        if (cmd == this.cmdHistory[this.cmdHistory.length - 1]) {
+            return;
+        }
+
+        if (this.cmdHistory.push(cmd) > c.maxHistorySize)
+            this.cmdHistory.shift();
+    },
+
+    /* previous = true, next = false */
+    getHistory: function(previous) {
+        if (this.cmdHistory.length < 1)
+            return "";
+
+        if (previous) {
+            if (this.cmdHistoryPointer == -1)
+                return this.cmdHistory[this.cmdHistoryPointer = this.cmdHistory.length - 1];
+            else if (this.cmdHistoryPointer == 0)
+                return this.cmdHistory[0];
+            else
+                return this.cmdHistory[--this.cmdHistoryPointer];
+        } else {
+            if (this.cmdHistoryPointer == -1)
+                return "";
+            else if (this.cmdHistoryPointer == this.cmdHistory.length - 1) { // out of range
+                this.cmdHistoryPointer = -1;
+                return "";
+            } else
+                return this.cmdHistory[++this.cmdHistoryPointer];
+        }
+    },
+
+    getPreviousHistory: function() { return this.getHistory(true); },
+    getNextHistory: function() { return this.getHistory(false); },
+
+    /*
+     * These functions are called from the bridge (Flash plugin external interface)
+     */
+
+    loaded: function () {
+        this.proxy = document.getElementById("hMUDClientPlugin");
+        this.canConnect = true;
+        this.screenWrite(m.clientLoaded);
+    },
+
+    connecting: function() {
+        this.screenWrite(m.connecting);
+        this.setConnectionState("connecting");
+    },
+
+    connected: function() {
+        this.screenWrite(m.connected);
+        this.setConnectionState("connected");
+    },
+
+    disconnected: function () {
+        this.screenWrite(m.disconnected);
+        this.setConnectionState("disconnected");
+    },
+
+    ioError: function () {
+        this.screenWrite(m.ioError); /* no change in state, I guess */
+    },
+
+    securityError: function () {
+        this.screenWrite(m.securityError);
+        this.setConnectionState("disconnected");
+    },
+
+    receive: function(str) {
+        this.screenWrite(str);
+    },
+
+    echo_on: function () {
+        this.setEcho(true);
+    },
+
+    echo_off: function () {
+        this.setEcho(false);
+    },
+
+    /*
+     * UI State
+     */
+
+    setEcho: function (b) {
+        b = b ? true : false;
+
+        if (this.echo == b)
+            return;
+
+        this.echo = b;
+
+        // Replacing input text by password or password by text
+        var newc = document.getElementById("cmdline-swap");
+        newc.setAttribute("id", "cmdline");
+        newc.style.display = "inline";
+        this.cmdline.setAttribute("id", "cmdline-swap");
+        this.cmdline.style.display = "none";
+        this.cmdline = newc;
+        this.initCmdLine();
+
+        arrangeUIElements(); // it will resize the cmdline properly
+    },
+
+    setFocus: function (b) {
+        this.focus = b ? true : false;
+    },
+
+    setConnectionState: function(state) {
+        if (state == "connecting") {
+            this.connState = "connecting";
+            this.setIconConnecting();
+        } else if (state == "connected") {
+            this.connState = "connected";
+            this.setIconConnected();
+        } else if (state == "disconnected") {
+            this.connState = "disconnected";
+            this.setIconDisconnected();
+        } else {
+            alert("Invalid connection state!");
+            return;
+        }
+
+        updateConnectionMenu();
+        arrangeUIElements();
+    },
+
+    setIconConnecting: function () {
+        clearInterval(this.connectingIId);
+        this.connectingIId = setInterval(this.swapIconConnected, 300);
+    },
+
+    /* helper for setIconConnecting */
+    swapIconConnected: function () {
+        if (hMUDClient.iConnOn.style.display == "none") {
+            hMUDClient.iConnOn.style.display = "inline";
+            hMUDClient.iConnOff.style.display = "none";
+        } else {
+            hMUDClient.iConnOn.style.display = "none";
+            hMUDClient.iConnOff.style.display = "inline";
+        }
+    },
+
+    setIconConnected: function () {
+        clearInterval(this.connectingIId);
+        this.iConnOn.style.display = "inline";
+        this.iConnOff.style.display = "none";
+    },
+
+    setIconDisconnected: function () {
+        clearInterval(this.connectingIId);
+        this.iConnOn.style.display = "none";
+        this.iConnOff.style.display = "inline";
+    },
+
+    getActiveConnectionIcon: function() {
+        if (this.iConnOn.style.display == "none")
+            return this.iConnOff;
+        else
+            return this.iConnOn;
+    }
+};
+
+function getViewportDimensions() {
+    var intH = 0, intW = 0;
+    
+    if(self.innerHeight) {
+       intH = window.innerHeight;
+       intW = window.innerWidth;
+    } 
+    else {
+        if(document.documentElement && document.documentElement.clientHeight) {
+            intH = document.documentElement.clientHeight;
+            intW = document.documentElement.clientWidth;
+        }
+        else {
+            if(document.body) {
+                intH = document.body.clientHeight;
+                intW = document.body.clientWidth;
+            }
+        }
+    }
+
+    return {
+        height: parseInt(intH, 10),
+        width: parseInt(intW, 10)
+    };
+}
+
+function findPos(obj)
+{
+    var curleft = 0;
+    var curtop = 0;
+
+    if (obj.offsetParent)
+        do
+        {
+            curleft += obj.offsetLeft;
+            curtop += obj.offsetTop;
+        }
+        while (obj = obj.offsetParent);
+
+    return [curleft,curtop];
+}
+
+/* Elements that are dynamically positioned should be treated here */
+function arrangeUIElements() {
+    var d = getViewportDimensions();
+    var p;
+
+    /* commandline */
+    var c = hMUDClient.cmdline;
+    c.style.width = (d.width - 15 - (hMUDClient.numIconsVisible * hMUDClient.iconWidth)) + "px";
+
+    /* output window */
+    var o = hMUDClient.output;
+    o.style.height = (d.height - (c.offsetHeight + 1) - 40) + "px";
+    o.style.width = (d.width - 40) + "px";
+
+    /* clearScreenMenu */
+    var ic = document.getElementById("i-clear");
+    var cs = document.getElementById("clearScreenMenu");
+    p = findPos(ic);
+    cs.style.left = (p[0] - cs.offsetWidth + ic.offsetWidth) + "px";
+    cs.style.top = (p[1] - cs.offsetHeight) + "px";
+
+    /* connectionMenu */
+    var icn = hMUDClient.getActiveConnectionIcon();
+    var cm = document.getElementById("connectionMenu");
+    p = findPos(icn);
+    cm.style.left = (p[0] - cm.offsetWidth + icn.offsetWidth) + "px";
+    cm.style.top = (p[1] - cm.offsetHeight) + "px";
+}
+
+function sendCommand() {
+    hMUDClient.command(hMUDClient.cmdline.value);
+    hMUDClient.cmdline.form.reset();
+    hMUDClient.cmdline.value="";
+}
+
+function doOnclick(e) {
+    var rightclick;
+    if (!e) e = window.event;
+
+    if (e.which) rightclick = (e.which == 3);
+    else if (e.button) rightclick = (e.button == 2);
+
+    /* If there's a selection, let's not change the focus */
+    /* http://www.quirksmode.org/dom/range_intro.html */
+    var userSelection;
+    if (window.getSelection)
+        userSelection = window.getSelection();
+    else if (document.selection) // should come last; Opera!
+        userSelection = document.selection.createRange();
+
+    var selectedText = userSelection;
+    if (userSelection.text)
+        selectedText = userSelection.text;
+    else if (selectedText.toString)
+        selectedText = selectedText.toString();
+    else
+        selectedText = "";
+
+    /* If it's not a right click and there's no text selected,
+       let's automatically focus the command line */
+    if (!rightclick && (!selectedText || selectedText.length < 1)) {
+        if (!window.disableCmdFocus)
+            hMUDClient.cmdline.focus();
+
+        var cs = document.getElementById("clearScreenMenu");
+        //if (cs.style.display != "none")
+          //  cs.style.display = "none";
+    }
+}
+
+/*
+ * Title alert
+ */
+function stopTitleAlert() {
+    if (window.titleIId) {
+        clearInterval(window.titleIId);
+        document.title = m.windowTitle;
+    }
+}
+
+function startTitleAlert() {
+
+    if (window.titleIId || hMUDClient.focus) {
+        document.title = m.windowTitle;
+        return;
+    }
+
+    window.titleIId = setInterval(function() {
+        document.title = document.title == m.windowTitleAlert ? m.windowTitle : m.windowTitleAlert;
+    }, 1000);
+    document.body.onmousemove = function() {
+        stopTitleAlert();
+        document.body.onmousemove = null;
+    };
+}
+
+function cmdlineKeyDown(e) {
+    e = e || window.event;
+
+    if (e.keyCode == 38) { // 38 = Up
+        hMUDClient.cmdline.value = hMUDClient.getPreviousHistory();
+    }
+    else if (e.keyCode == 40) { // 40 = Down
+        hMUDClient.cmdline.value = hMUDClient.getNextHistory();
+    }
+
+    stopTitleAlert();
+}
+
+function saveLog() {
+
+    var ls = document.getElementById("logSave");
+
+    if (ls.style.display == "none") {
+        window.disableCmdFocus = true;
+        ls.value = "<html><head><title>hMUD Log</title><style type=\"text/css\">"
+            + document.getElementById("logStyle").innerHTML
+            + "</style><body><pre id=\"output\">" + hMUDClient.output.innerHTML + "</pre></body></html>";
+        ls.style.display = "inline";
+    } else {
+        window.disableCmdFocus = false;
+        ls.innerHTML = "";
+        ls.style.display = "none";
+    }
+}
+
+function clearScreen() {
+    var cs = document.getElementById("clearScreenMenu");
+
+    if (cs.style.display == "none") {
+        cs.style.display = "block";
+        arrangeUIElements();
+    } else {
+        cs.style.display = "none";
+    }
+}
+
+function connectDisconnect() {
+    var cm = document.getElementById("connectionMenu");
+
+    if (cm.style.display == "none") {
+        updateConnectionMenu();
+        cm.style.display = "block";
+        arrangeUIElements();
+    } else {
+        cm.innerHTML = "";
+        cm.style.display = "none";
+    }
+}
+
+function updateConnectionMenu() {
+    var cm = document.getElementById("connectionMenu");
+    var ul = document.createElement("ul");
+    var li = document.createElement("li");
+
+    cm.innerHTML = "";
+
+    if (hMUDClient.connState == "disconnected") {
+        li.appendChild(document.createTextNode(m.connect));
+        li.onclick = function(){hMUDClient.connect();};
+        ul.appendChild(li);
+    } else {
+        li.appendChild(document.createTextNode(m.reconnect));
+        li.onclick = function(){hMUDClient.disconnect();hMUDClient.connect();};
+        ul.appendChild(li);
+
+        var li2 = document.createElement("li");
+        li2.appendChild(document.createTextNode(m.disconnect));
+        li2.onclick = function(){hMUDClient.disconnect();};
+        ul.appendChild(li2);
+    }
+
+    cm.appendChild(ul);
+}
+
+onload = function() { hMUDClient.init(); arrangeUIElements(); loadFlashBridge(); };
+onresize =  function() { arrangeUIElements(); };
+
+/*
+ * When the windows loses or gains focus.
+ */
+if (iAmIE()) { // check for Internet Explorer
+    document.onfocusin =  function() { stopTitleAlert(); hMUDClient.setFocus(true); };
+    document.onfocusout = function() { hMUDClient.setFocus(false); };
+} else {
+    window.onfocus = function() { stopTitleAlert(); hMUDClient.setFocus(true); };
+    window.onblur = function() { hMUDClient.setFocus(false); };
+}
+
+</script>
+</head>
+<body onclick="doOnclick(event);">
+<div id="hMUDClientPlugin">&nbsp;</div><pre id="output"></pre>
+<div id="clearScreenMenu" class="iconMenu">
+    <p><script>document.write(m.clearOutput);</script>&nbsp;(<strong><span id="numLinesInScreen"></span></strong>&nbsp;<script>document.write(m.lines);</script>)</p>
+    <ul>
+        <li onclick="hMUDClient.clearScreen(1000)"><script>document.write(m.preserve1000);</script></li>
+        <li onclick="hMUDClient.clearScreen('half')"><script>document.write(m.half);</script></li>
+        <li onclick="hMUDClient.clearScreen('all')"><script>document.write(m.all);</script></li>
+    </ul>
+</div>
+<div id="connectionMenu" class="iconMenu"></div>
+<form action="" onsubmit="sendCommand();return false;"><input type="text" class="cmdline" id="cmdline" onkeydown="return cmdlineKeyDown(event);"><input type="password" class="cmdline" id="cmdline-swap"><span id="iconsBar"></span><input type="submit" value="Send" id="submit"><textarea id="logSave"></textarea></form>
+</body>
+</html>

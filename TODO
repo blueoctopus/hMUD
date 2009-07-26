@@ -1,0 +1,27 @@
+
+TODO:
+
+- Scrollbar glitch in IE
+- Font selection, Courier or Fixedsys, if both are available (use some font detection method).
+- Quick help for commands
+- Title alert when window is out of focus (improve that, it's not working
+  perfectly).
+- Simple and intuitive log saving in html (well, flash is boring, it does not
+  let me call FileReference.save() through ExternalInterface, I'm thinking in
+  some solutions but it will take more time than I expected).
+- beep
+- better telnet parsing
+
+Done:
+
+* Prewrap is not working in FF3, I think that's because of the &nbsp;'s
+  generated in AnsiToHtml.hx. One idea is creating a variable in the browser
+  telling if it's IE or not, then Flash can access it and know if it will
+  or will not output the &nbsp;'s characters (they are necessary to make
+  the output work properly in IE).
+* connect/disconnect/reconnect options in connection status icon
+* line counter of the output window
+* clear output window (everything, half or a number of lines)
+* Make copy and paste work (when selecting text do not focus the command input)
+* history navigation (by pressing up/down arrow)
+* swap text input with password input when echo_off

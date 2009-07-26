@@ -1,0 +1,2 @@
+#!/bin/sh
+perl ./flashpolicyd_v0.6/Standalone/flashpolicyd.pl --file=flashpolicyd_v0.6/flashpolicy.xml --port=4010 &
