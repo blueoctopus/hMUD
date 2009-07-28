@@ -1,4 +1,4 @@
 --no-traces
 -swf hmud-bridge.swf
 -swf-version 9
--main HMUDBridge
+-main HMUD_Bridge

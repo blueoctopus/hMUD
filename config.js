@@ -1,4 +1,4 @@
-var hMUDConf = {
+var HMUD_Config = {
              host: window.location.hostname,
              port: 4000,
        policyPort: 4010,

@@ -1,16 +1,15 @@
 
 TODO:
 
-- Scrollbar glitch in IE
-- Font selection, Courier or Fixedsys, if both are available (use some font detection method).
 - Quick help for commands
-- Title alert when window is out of focus (improve that, it's not working
-  perfectly).
 - Simple and intuitive log saving in html (well, flash is boring, it does not
   let me call FileReference.save() through ExternalInterface, I'm thinking in
   some solutions but it will take more time than I expected).
 - beep
+- clear character sequence (sent from MUD)
 - better telnet parsing
+- better modularization
+- Multiple commands separated by ';'
 
 Done:
 
@@ -25,3 +24,10 @@ Done:
 * Make copy and paste work (when selecting text do not focus the command input)
 * history navigation (by pressing up/down arrow)
 * swap text input with password input when echo_off
+* Title alert when window is out of focus (improve that, it's not working
+  perfectly).
+* Font selection, Courier or Fixedsys.
+* Scrollbar glitch in IE
+* Scroll lock with visual sign.
+* Better modularization (incomplete)
+

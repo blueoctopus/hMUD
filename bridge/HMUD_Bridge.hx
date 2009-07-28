@@ -28,22 +28,22 @@
  */
 import AnsiToHtml;
 
-class HMUDBridge {
+class HMUD_Bridge {
 
     static var socket = new flash.net.Socket();
-    static var JSObj = "hMUDClient";
+    static var JSObj = "HMUD_Client";
 
     static function main()
     {
         if (flash.external.ExternalInterface.available) {
             /* Calls the javascript load method once the SWF has loaded */
-            flash.external.ExternalInterface.call(JSObj+".loaded");
+            sendMessage("loaded");
 
             /* \xA0 is the NBSP character. oddly enough, that's the only way
                I could make the line breaks work correctly in IE7. So here
                we are telling AnsiToHtml to use this char instead of common
                spaces when generating the HTML. */
-            if (flash.external.ExternalInterface.call("iAmIE"))
+            if (sendMessage("usingIE"))
                 AnsiToHtml.spaceString = "\xA0";
             else
                 AnsiToHtml.spaceString = " ";
@@ -55,14 +55,14 @@ class HMUDBridge {
             /* CONNECT */
             socket.addEventListener(flash.events.Event.CONNECT, function(e) : Void {
                     trace("CONNECT");
-                    flash.external.ExternalInterface.call(JSObj+".connected");
+                    sendMessage("connected");
                 }
             );
 
             /* CLOSE */
             socket.addEventListener(flash.events.Event.CLOSE, function(e) : Void {
                     trace("CLOSE");
-                    flash.external.ExternalInterface.call(JSObj+".disconnected");
+                    sendMessage("disconnected");
                 }
             );
 
@@ -70,14 +70,14 @@ class HMUDBridge {
             /* IO_ERROR */
             socket.addEventListener(flash.events.IOErrorEvent.IO_ERROR, function(e) : Void {
                     trace("IO_ERROR: " +  e.text);
-                    flash.external.ExternalInterface.call(JSObj+".ioError", e.text);
+                    sendMessage("ioError", e.text);
                 }
             );
 
             /* SECURITY_ERROR */
             socket.addEventListener(flash.events.SecurityErrorEvent.SECURITY_ERROR, function(e) : Void {
                     trace("SECURITY_ERROR: " +  e.text);
-                    flash.external.ExternalInterface.call(JSObj+".securityError", e.text);
+                    sendMessage("securityError", e.text);
                 }
             );
 
@@ -101,10 +101,10 @@ class HMUDBridge {
                     // Parse telnet options (I'm lazy, just get last telnet option)
                     // IAC WILL ECHO 
                     if (~/(^|[^\xFF])\xFF\xFB\x01[^\xFF]*$/.match(msg))
-                        flash.external.ExternalInterface.call(JSObj+".echo_off");
+                        sendMessage("echoOff");
                     // IAC WONT ECHO
                     else if (~/(^|[^\xFF])\xFF\xFC\x01[^\xFF]*$/.match(msg))
-                        flash.external.ExternalInterface.call(JSObj+".echo_on");
+                        sendMessage("echoOn");
 
                     // now get rid of those telnet chars.
                     msg = ~/\xFF[\xFC\xFB]\x01/g.replace(msg, "");
@@ -116,7 +116,7 @@ class HMUDBridge {
 
                     // Ansi To Html!
                     msg = AnsiToHtml.parse(msg);
-                    flash.external.ExternalInterface.call(JSObj+".receive", ~/\\/g.replace(msg, "\\\\"));
+                    sendMessage("receive", ~/\\/g.replace(msg, "\\\\"));
                 }
             );
 
@@ -133,13 +133,17 @@ class HMUDBridge {
         }   
     }
     
+    static function sendMessage(msg, ?data) {
+        return flash.external.ExternalInterface.call(JSObj+".handleMessage", msg, data);
+    }
+
     static function connected() {
     	return socket.connected;
     }
 
     static function connect(host, port, policyPort)
     {
-        flash.external.ExternalInterface.call(JSObj+".connecting");
+        sendMessage("connecting");
 
         trace("Load policy from xmlsocket://" + host + ":" + policyPort);
         flash.system.Security.loadPolicyFile("xmlsocket://" + host + ":" + policyPort);
@@ -186,7 +190,7 @@ class HMUDBridge {
             file.save(log, "log.html");
         } catch( unknown : Dynamic ) {
            trace("Unknown exception : "+Std.string(unknown));
-           flash.external.ExternalInterface.call(JSObj+".receive", Std.string(unknown));
+           sendMessage("receive", Std.string(unknown));
         }
 
     }
