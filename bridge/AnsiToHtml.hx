@@ -144,9 +144,9 @@ class AnsiToHtml
             }
         }
 
-        /*if (lastst != null) {
+        if (lastst != null) {
             new_str.add("<b class=\"" + lastst + "\">");
-        }*/
+        }
 
         while ((c = str.charAt(i++)) != "")
         {
@@ -178,9 +178,9 @@ class AnsiToHtml
             }
         }
 
-        /*if (lastst != null) {
+        if (lastst != null) {
             new_str.add("</b>");
-        }*/
+        }
 
         return new_str.toString();
     }

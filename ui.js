@@ -93,7 +93,7 @@ var HMUD_UI = {
     /* send a command to MUD */
     command: function (cmd) {
         if (this.echo) {
-            this.screenWrite(cmd.replace(/ /g, "\xA0") + "<br>");
+            this.screenWrite(cmd.replace(/ /g, BrowserDetect.browser == "Explorer" ? "\xA0" : " ") + "<br>");
             HMUD_History.add(cmd);
         }
         HMUD_Client.command(cmd);
@@ -125,9 +125,12 @@ var HMUD_UI = {
             lastIndex = i + 4; /* 4 = <BR> length */
         }
 
-        var b = document.createElement("b");
-        b.innerHTML = str;
-        this.output.appendChild(b);
+        var dummy = document.createElement("span");
+        dummy.innerHTML = str;
+        var l = dummy.childNodes.length;
+
+        for (i = 0; i < l; ++i)
+            this.output.appendChild(dummy.childNodes[0]);
 
         if (!this.focus)
             this.startTitleAlert();

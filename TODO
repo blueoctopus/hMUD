@@ -13,6 +13,19 @@ TODO:
 
 Done:
 
+2009-07-28:
+
+* Title alert when window is out of focus (improved, it was not working
+  perfectly).
+* Font selection: Courier or Fixedsys.
+* Scrollbar glitch in IE.
+* Scroll lock with visual sign.
+* Better modularization (incomplete).
+* Layout adjusts.
+* Slight improvements on color parsing and output generation.
+
+2009-01-16:
+
 * Prewrap is not working in FF3, I think that's because of the &nbsp;'s
   generated in AnsiToHtml.hx. One idea is creating a variable in the browser
   telling if it's IE or not, then Flash can access it and know if it will
@@ -24,10 +37,4 @@ Done:
 * Make copy and paste work (when selecting text do not focus the command input)
 * history navigation (by pressing up/down arrow)
 * swap text input with password input when echo_off
-* Title alert when window is out of focus (improve that, it's not working
-  perfectly).
-* Font selection, Courier or Fixedsys.
-* Scrollbar glitch in IE
-* Scroll lock with visual sign.
-* Better modularization (incomplete)
 
