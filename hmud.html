@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <!--
 /*
- * hMUD v0.3
+ * hMUD v0.5
  */
 
 /*
@@ -62,18 +62,32 @@ body { margin:0; }
     height: 23px;
     outline: none;
 }
+
+#cmdGuide { position:absolute; right: 10px; background-color:#000; width:300px; display: none; border:1px solid #333;}
+#cmdGuide .closeBtn { float:right; background-color:#800000; color:#FFFFFF; cursor:default; }
+#cmdGuide .closeBtn:hover { background-color:#800000; color:#FF0000;}
+#cmdGuide .caption { color:#FFFFFF; text-align: center; background-color:#000080;}
+#cmdGuide table { margin:10px; }
+#cmdGuide th { text-align:left; color: #008000; font-weight:normal; }
+#cmdGuide td { padding-left:10px; }
+#cmdGuide .command-name:hover { background-color:#C0C0C0; color:#000; cursor:default; }
+#cmdGuide .command-description { border:1px solid #333; width:278px; color:#FFF; padding:10px; background-color:#000; position: absolute; left:0;}
+
 #iconsBar { position:absolute; }
-#iconsBar img { background-color: #333; cursor: pointer; vertical-align: top; }
+#iconsBar img { background-color: #333; cursor: default; vertical-align: top; }
 #iconsBar img:hover { background-color: #666; }
+
 #cmdline-swap { display: none; }
 #submit { position:absolute; top: -1000px; left: -1000px; }
+
 #logSave { width: 60%; height: 80%; display: none; position: absolute; top: 50px; left: 50px; }
 #logSaveTA { width: 95%; height: 95%; position: absolute; }
+
 .iconMenu { display: none; background-color: #000; border:1px solid #333; position: absolute; padding:10px; color: #FFF; white-space: nowrap; }
 .iconMenu fieldset { border-color: #222; display: block; padding:0 10px 10px 10px; }
 .iconMenu fieldset legend { color: #008000; display: block; margin-bottom:10px; }
 .iconMenu ul { list-style-type: none; margin: 0; padding: 0; }
-.iconMenu li { cursor: pointer; }
+.iconMenu li { cursor: default; }
 .iconMenu li:hover { background-color: #FFF; color: #444; }
 </style>
 <!--[if IE]>
@@ -88,6 +102,11 @@ html { background-color: #000; color: #C0C0C0; }
 body.font-fixed * {
     font-family: "Fixedsys Excelsior 3.01", "Fixedsys Excelsior 3.00", "Fixedsys", monospace;
     font-size: 16px;
+    line-height: 16px;
+}
+body.font-monospace * {
+    font-family: "Monospace", monospace;
+    font-size: 14px;
 }
 body.font-courier * {
     font-family: "Courier New", "Lucida Console", monospace;
@@ -155,203 +174,15 @@ b.c45 { background-color: #800080; }			/* Magenta	*/
 b.c46 { background-color: #008080; }			/* Cyan		*/
 b.c47 { background-color: #C0C0C0; }			/* Grey		*/
 </style>
-<script src="swfobject/swfobject.js"></script>
-<script src="browser-detect.js"></script>
-<script src="cookies.js"></script>
+<script src="swfobject/swfobject.js" type="text/javascript"></script>
+<script src="browser-detect.js" type="text/javascript"></script>
+<script src="cookies.js" type="text/javascript"></script>
 <script src="messages.js" type="text/javascript"></script>
+<script src="guide.js" type="text/javascript"></script>
 <script src="config.js" type="text/javascript"></script>
 <script src="client.js" type="text/javascript"></script>
 <script src="ui.js" type="text/javascript"></script>
 <script type="text/javascript">
-function getViewportDimensions() {
-    var intH = 0, intW = 0;
-    
-    if(self.innerHeight) {
-       intH = window.innerHeight;
-       intW = window.innerWidth;
-    } 
-    else {
-        if(document.documentElement && document.documentElement.clientHeight) {
-            intH = document.documentElement.clientHeight;
-            intW = document.documentElement.clientWidth;
-        }
-        else {
-            if(document.body) {
-                intH = document.body.clientHeight;
-                intW = document.body.clientWidth;
-            }
-        }
-    }
-
-    return {
-        height: parseInt(intH, 10),
-        width: parseInt(intW, 10)
-    };
-}
-
-function findPos(obj)
-{
-    var curleft = 0;
-    var curtop = 0;
-
-    if (obj.offsetParent)
-        do
-        {
-            curleft += obj.offsetLeft;
-            curtop += obj.offsetTop;
-        }
-        while (obj = obj.offsetParent);
-
-    return [curleft,curtop];
-}
-
-function sendCommand() {
-    HMUD_UI.command(HMUD_UI.cmdline.value);
-    HMUD_UI.cmdline.form.reset();
-    HMUD_UI.cmdline.value="";
-}
-
-function cmdlineKeyDown(e) {
-    e = e || window.event;
-
-    if (e.keyCode == 38) { // 38 = Up
-        HMUD_UI.cmdline.value = HMUD_History.previous();
-    }
-    else if (e.keyCode == 40) { // 40 = Down
-        HMUD_UI.cmdline.value = HMUD_History.next();
-    }
-}
-
-function saveLog() {
-
-    var ls = document.getElementById("logSave");
-    var lt = document.getElementById("logSaveTA");
-
-    if (ls.style.display == "none") {
-        var bodyClass = document.body.className.length
-                      ? " class=\"" + document.body.className + "\"" : "";
-        window.disableCmdFocus = true;
-        lt.value = "<html><head><title>hMUD Log</title><style type=\"text/css\">"
-            + document.getElementById("logStyle").innerHTML
-            + "</style><body" + bodyClass + "><pre id=\"output\">"
-            + HMUD_UI.output.innerHTML + "</pre></body></html>";
-        ls.style.display = "block";
-    } else {
-        window.disableCmdFocus = false;
-        lt.value = "";
-        ls.style.display = "none";
-    }
-}
-
-function options() {
-    var om = document.getElementById("optionsMenu");
-
-    if (om.style.display == "none") {
-        createOptionsMenu();
-        om.style.display = "block";
-        HMUD_UI.rearrange();
-    } else {
-        om.style.display = "none";
-    }
-}
-
-/* will create menu if it still does not exist */
-function createOptionsMenu() {
-    var d = document;
-    var om = d.getElementById("optionsMenu");
-
-    if (om.alreadyCreated)
-        return;
-
-    /* font fieldset */
-    var fs1 = d.createElement("fieldset");
-    var lg1 = d.createElement("legend");
-    lg1.appendChild(d.createTextNode(m.selectFont));
-    fs1.appendChild(lg1);
-
-    var ul1 = d.createElement("ul");
-
-    var li1 = d.createElement("li");
-    li1.onclick = function(){HMUD_UI.selectFont('font-fixed', true);};
-    li1.appendChild(d.createTextNode("Fixedsys"));
-    ul1.appendChild(li1);
-    var li2 = d.createElement("li");
-    li2.onclick = function(){HMUD_UI.selectFont('font-courier', true);};
-    li2.appendChild(d.createTextNode("Courier New"));
-    ul1.appendChild(li2);
-    var li3 = d.createElement("li");
-    li3.onclick = function(){HMUD_UI.selectFont('font-courier-b', true);};
-    li3.appendChild(d.createTextNode("Courier New Bold"));
-    ul1.appendChild(li3);
-    fs1.appendChild(ul1);
-
-    /* clear screen fieldset */
-    var fs2 = d.createElement("fieldset");
-    var lg2 = d.createElement("legend");
-    lg2.appendChild(d.createTextNode(m.clearOutput + " ("));
-    var st1 = d.createElement("strong");
-    var sp1 = d.getElementById("numLinesInScreen");
-    sp1.style.display = "inline";
-    st1.appendChild(sp1);
-    lg2.appendChild(st1);
-    lg2.appendChild(d.createTextNode(" " + m.lines + ")"));
-    fs2.appendChild(lg2);
-
-    var ul2 = d.createElement("ul");
-
-    var li4 = d.createElement("li");
-    li4.onclick = function(){HMUD_UI.clearScreen(1000);};
-    li4.appendChild(d.createTextNode(m.preserve1000));
-    ul2.appendChild(li4);
-    var li5 = d.createElement("li");
-    li5.onclick = function(){HMUD_UI.clearScreen("half");};
-    li5.appendChild(d.createTextNode(m.half));
-    ul2.appendChild(li5);
-    var li6 = d.createElement("li");
-    li6.onclick = function(){HMUD_UI.clearScreen("all");};
-    li6.appendChild(d.createTextNode(m.all));
-    ul2.appendChild(li6);
-    fs2.appendChild(ul2);
-
-    om.appendChild(fs1);
-    om.appendChild(fs2);
-
-    om.alreadyCreated = true;
-}
-
-function connectDisconnect() {
-    var d = document;
-    var cm = d.getElementById("connectionMenu");
-
-    if (cm.style.display == "none") {
-        cm.innerHTML = "";
-
-        var ul = d.createElement("ul");
-        var li = d.createElement("li");
-
-        if (HMUD_UI.connState == "disconnected") {
-            li.appendChild(d.createTextNode(m.connect));
-            li.onclick = function(){HMUD_Client.connect();};
-            ul.appendChild(li);
-        } else {
-            li.appendChild(d.createTextNode(m.reconnect));
-            li.onclick = function(){HMUD_Client.disconnect();HMUD_Client.connect();};
-            ul.appendChild(li);
-
-            var li2 = d.createElement("li");
-            li2.appendChild(d.createTextNode(m.disconnect));
-            li2.onclick = function(){HMUD_Client.disconnect();};
-            ul.appendChild(li2);
-        }
-
-        cm.appendChild(ul);
-        cm.style.display = "block";
-        HMUD_UI.rearrange();
-    } else {
-        cm.style.display = "none";
-    }
-}
-
 window.onload = function() { HMUD_UI.init(); };
 </script>
 </head>
@@ -359,9 +190,10 @@ window.onload = function() { HMUD_UI.init(); };
 <span id="numLinesInScreen" style="display:none">&nbsp;</span>
 <div id="hMUDBridgePlugin">&nbsp;</div>
 <pre id="output"></pre>
+<div id="cmdGuide"><span class="closeBtn" onclick="HMUD_Menu.hideGuide(true);">[ X ]</span></div>
 <div id="optionsMenu" class="iconMenu"></div>
 <div id="connectionMenu" class="iconMenu"></div>
 <div id="logSave" class="iconMenu"><form><textarea id="logSaveTA"></textarea></form></div>
-<form action="" onsubmit="sendCommand();return false;"><input type="text" class="cmdline" id="cmdline" onkeydown="return cmdlineKeyDown(event);"><input type="password" class="cmdline" id="cmdline-swap"><span id="iconsBar"></span><input type="submit" value="Send" id="submit"></form>
+<form action="" id="cmdForm"><input type="text" class="cmdline" id="cmdline"><input type="password" class="cmdline" id="cmdline-swap"><span id="iconsBar"></span><input type="submit" value="Send" id="submit"></form>
 </body>
 </html>

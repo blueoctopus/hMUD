@@ -22,8 +22,9 @@ var HMUD_Client = {
 
     tryToConnect: function () {
         if (this.connectIId == null) {
+            var that = this;
             this.loadFlashBridge();
-            this.connectIId = setInterval(function(){HMUD_Client.tryToConnect();}, 100);
+            this.connectIId = setInterval(function(){that.tryToConnect();}, 100);
         }
 
         if (this.canConnect) {

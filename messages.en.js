@@ -11,6 +11,7 @@ var HMUD_Messages = {
       windowTitle: "DeBo (hMUD)",
  windowTitleAlert: "»»»»»!«««««",
 
+         cmdGuide: "Command reference",
        selectFont: "Favorite font",
 
       clearOutput: "Clear screen",

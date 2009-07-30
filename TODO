@@ -1,7 +1,6 @@
 
 TODO:
 
-- Quick help for commands
 - Simple and intuitive log saving in html (well, flash is boring, it does not
   let me call FileReference.save() through ExternalInterface, I'm thinking in
   some solutions but it will take more time than I expected).
@@ -9,9 +8,16 @@ TODO:
 - clear character sequence (sent from MUD)
 - better telnet parsing
 - better modularization
-- Multiple commands separated by ';'
+- Multiple commands separated by ';' (or maybe a multiline textarea when doing SHIFT+ENTER)
 
 Done:
+
+2009-07-30:
+
+* Now the cursor is being correctly placed at the end of the text when
+  navigating through history. (Chrome, Firefox and Explorer).
+* Quick help for commands (guide.js)
+* save command guide state (visible or not) in user's cookie
 
 2009-07-28:
 

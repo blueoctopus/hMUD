@@ -16,9 +16,14 @@ var HMUD_UI = {
     connState: null,
 
     init: function () {
+        var that = this;
+
+        /* Set font (based on Cookie, Browser or OS) */
         var f;
         if (f = readCookie("font"))
-            this.selectFont(f, false);
+            this.selectFont(f, true);
+        else if (BrowserDetect.OS == "Linux")
+            this.selectFont("font-monospace", false);
         else if (BrowserDetect.browser == "Chrome")
             /* Chrome does not support Fixedsys natively */
             this.selectFont("font-courier-b", false);
@@ -26,15 +31,15 @@ var HMUD_UI = {
             this.selectFont("font-fixed", false);
 
         this.output = document.getElementById("output");
-        this.output.onscroll = function() { HMUD_UI.outputOnScroll(this); };
+        this.output.onscroll = function() { that.outputOnScroll(this); };
 
-        this.icons = [["i-save", "Treasure-icon.gif", saveLog],
-                      ["i-clear", "Rune-icon.gif", options],
-                      ["i-conn-on", "Button-icon.gif", connectDisconnect],
-                      ["i-conn-off", "Button-icon-off.gif", connectDisconnect]];
+        this.icons = [["i-save", "Treasure-icon.gif", function(){HMUD_Menu.saveLog();}],
+                      ["i-clear", "Rune-icon.gif", function(){HMUD_Menu.options();}],
+                      ["i-conn-on", "Button-icon.gif", function(){HMUD_Menu.connection();}],
+                      ["i-conn-off", "Button-icon-off.gif", function(){HMUD_Menu.connection();}]];
         this.initCmdLine();
 
-        document.body.onclick = function(e) { HMUD_UI.bodyOnClick(e); };
+        document.body.onclick = function(e) { that.bodyOnClick(e); };
         document.title = m.windowTitle;
 
         /* Default icons */
@@ -42,7 +47,7 @@ var HMUD_UI = {
         var getIconFn = function(i) {
             return icon.onclick = function(e) {
                 if (!e) var e = window.event;
-                HMUD_UI.icons[i][2]();
+                that.icons[i][2](this);
                 e.cancelBubble = true;
                 if (e.stopPropagation)
                     e.stopPropagation();
@@ -66,17 +71,30 @@ var HMUD_UI = {
         this.iConnOff = document.getElementById("i-conn-off");
 
         /*
+         * Display guide (cookie, or display by default)
+         */
+        var show_guide;
+        if (show_guide = readCookie("showGuide")) {
+            if (show_guide == "yes")
+                HMUD_Menu.showGuide(true);
+            else
+                HMUD_Menu.hideGuide(true);
+        } else {
+            HMUD_Menu.showGuide(false);
+        }
+
+        /*
          * When the window loses or gains focus.
          */
         if (BrowserDetect.browser == "Explorer") {
-            document.onfocusin =  function() { HMUD_UI.stopTitleAlert(); HMUD_UI.setFocus(true); };
-            document.onfocusout = function() { HMUD_UI.setFocus(false); };
+            document.onfocusin =  function() { that.stopTitleAlert(); that.setFocus(true); };
+            document.onfocusout = function() { that.setFocus(false); };
         } else {
-            window.onfocus = function() { HMUD_UI.stopTitleAlert(); HMUD_UI.setFocus(true); };
-            window.onblur = function() { HMUD_UI.setFocus(false); };
+            window.onfocus = function() { that.stopTitleAlert(); that.setFocus(true); };
+            window.onblur = function() { that.setFocus(false); };
         }
 
-        window.onresize =  function() { HMUD_UI.rearrange(); };
+        window.onresize =  function() { that.rearrange(); };
         this.rearrange();
 
         this.screenWrite(m.loadingClient);
@@ -85,9 +103,35 @@ var HMUD_UI = {
     },
 
     initCmdLine: function () {
+        var that = this;
         this.cmdline = document.getElementById("cmdline");
-        this.cmdline.onfocus = function() { HMUD_UI.setFocus(true); };
+        this.cmdline.onfocus = function() {
+            that.setFocus(true);
+            /* place the cursor at the end of the text */
+            this.value = this.value;
+        };
+        this.cmdline.onkeydown = function(e) {
+            e = e || window.event;
+        
+            if (e.keyCode == 38) { // 38 = Up
+                this.value = HMUD_History.previous();
+            }
+            else if (e.keyCode == 40) { // 40 = Down
+                this.value = HMUD_History.next();
+            }
+        };
+        this.cmdline.onkeyup = function() {
+            /* place the cursor at the end of the text */
+            this.value += "";
+        };
         this.cmdline.focus();
+
+        document.getElementById("cmdForm").onsubmit = function() {
+            that.command(that.cmdline.value);
+            that.cmdline.form.reset();
+            that.cmdline.value="";
+            return false;
+        };
     },
 
     /* send a command to MUD */
@@ -235,12 +279,31 @@ var HMUD_UI = {
         p = findPos(icn);
         cm.style.left = (p[0] - cm.offsetWidth + icn.offsetWidth) + "px";
         cm.style.top = (p[1] + 1 - cm.offsetHeight) + "px";
+
+        /* fixing fieldset elements inside menus */
+        var fields = document.getElementsByTagName("fieldset");
+        for (var i = 0; i < fields.length; ++i) {
+            if (fields[i].lastChild.className != "fsSpacer") {
+                var sp = document.createElement("div");
+                sp.className = "fsSpacer";
+                sp.style.height = "0px";
+                sp.style.width = (fields[i].parentNode.offsetWidth - 45) + "px";
+                fields[i].appendChild(sp);
+            }
+        }
+
+        /* command guide */
+        var guide = document.getElementById("cmdGuide");
+        if (guide.style.display != "none") {
+            p = findPos(c);
+            guide.style.top = (p[1] - guide.offsetHeight) + "px";
+        }
     },
 
     selectFont: function(name, save) {
         document.body.className = name;
         if (save)
-            createCookie("font", name, 10000);
+            createCookie("font", name, 30);
     },
 
     bodyOnClick: function(e) {
@@ -280,8 +343,10 @@ var HMUD_UI = {
             if (o.style.display != "none")
                 o.style.display = "none";
             o = document.getElementById("logSave");
-            if (o.style.display != "none")
+            if (o.style.display != "none") {
                 o.style.display = "none";
+                window.disableCmdFocus = false;
+            }
         }
     },
 
@@ -300,10 +365,11 @@ var HMUD_UI = {
         document.title = document.title == m.windowTitleAlert ? m.windowTitle : m.windowTitleAlert;
 
         if (window.titleIId == null) {
-            window.titleIId = setInterval(function(){HMUD_UI.startTitleAlert();}, 1000);
+            var that = this;
+            window.titleIId = setInterval(function(){that.startTitleAlert();}, 1000);
 
             document.body.onmousemove = function() {
-                HMUD_UI.stopTitleAlert();
+                that.stopTitleAlert();
                 document.body.onmousemove = function(){};
             };
         }
@@ -360,7 +426,8 @@ var HMUD_UI = {
 
     setIconConnecting: function () {
         clearInterval(this.connectingIId);
-        this.connectingIId = setInterval(function(){HMUD_UI.swapIconConnected}, 300);
+        var that = this;
+        this.connectingIId = setInterval(function(){that.swapIconConnected}, 300);
     },
 
     /* helper for setIconConnecting */
@@ -483,4 +550,286 @@ var HMUD_History = {
             this.commands.shift();
     }
 };
+
+var HMUD_Menu = {
+    connection: function () {
+        var d = document;
+        var cm = d.getElementById("connectionMenu");
+    
+        if (cm.style.display == "none") {
+            cm.innerHTML = "";
+    
+            var ul = d.createElement("ul");
+            var li = d.createElement("li");
+    
+            if (HMUD_UI.connState == "disconnected") {
+                li.appendChild(d.createTextNode(m.connect));
+                li.onclick = function(){HMUD_Client.connect();};
+                ul.appendChild(li);
+            } else {
+                li.appendChild(d.createTextNode(m.reconnect));
+                li.onclick = function(){HMUD_Client.disconnect();HMUD_Client.connect();};
+                ul.appendChild(li);
+    
+                var li2 = d.createElement("li");
+                li2.appendChild(d.createTextNode(m.disconnect));
+                li2.onclick = function(){HMUD_Client.disconnect();};
+                ul.appendChild(li2);
+            }
+    
+            cm.appendChild(ul);
+            cm.style.display = "block";
+            HMUD_UI.rearrange();
+        } else {
+            cm.style.display = "none";
+        }
+    },
+
+    options: function () {
+        var om = document.getElementById("optionsMenu");
+    
+        if (om.style.display == "none") {
+            this.updateOptionsMenu();
+            om.style.display = "block";
+            HMUD_UI.rearrange();
+        } else {
+            om.style.display = "none";
+        }
+    },
+
+    /* will create menu if it still does not exist */
+    updateOptionsMenu: function () {
+        var d = document;
+        var om = d.getElementById("optionsMenu");
+    
+        if (om.alreadyCreated) {
+            return;
+        }
+    
+        /* Command guide */
+        if (HMUD_Guide.length > 0) {
+            var g_fs = d.createElement("fieldset");
+            var g_lg = d.createElement("legend");
+            g_lg.appendChild(d.createTextNode("?"));
+            g_fs.appendChild(g_lg);
+            var g_ul = d.createElement("ul");
+            g_fs.appendChild(g_ul);
+        }
+    
+        var g_li1 = d.createElement("li");
+        g_li1.onclick = function(){HMUD_Menu.showGuide(true);};
+        g_li1.appendChild(d.createTextNode(m.cmdGuide));
+        g_ul.appendChild(g_li1);
+        om.appendChild(g_fs);
+
+        /* font fieldset */
+        var f_fs = d.createElement("fieldset");
+        var f_lg = d.createElement("legend");
+        f_lg.appendChild(d.createTextNode(m.selectFont));
+        f_fs.appendChild(f_lg);
+    
+        var f_ul = d.createElement("ul");
+    
+        var f_li1 = d.createElement("li");
+        f_li1.onclick = function(){HMUD_UI.selectFont('font-fixed', true);};
+        f_li1.appendChild(d.createTextNode("Fixedsys"));
+        f_ul.appendChild(f_li1);
+        var f_li2 = d.createElement("li");
+        f_li2.onclick = function(){HMUD_UI.selectFont('font-courier', true);};
+        f_li2.appendChild(d.createTextNode("Courier New"));
+        f_ul.appendChild(f_li2);
+        var f_li3 = d.createElement("li");
+        f_li3.onclick = function(){HMUD_UI.selectFont('font-courier-b', true);};
+        f_li3.appendChild(d.createTextNode("Courier New Bold"));
+        f_ul.appendChild(f_li3);
+        var f_li4 = d.createElement("li");
+        f_li4.onclick = function(){HMUD_UI.selectFont('font-monospace', true);};
+        f_li4.appendChild(d.createTextNode("Monospace"));
+        f_ul.appendChild(f_li4);
+        f_fs.appendChild(f_ul);
+    
+        /* clear screen fieldset */
+        var c_fs = d.createElement("fieldset");
+        var c_lg = d.createElement("legend");
+        c_lg.appendChild(d.createTextNode(m.clearOutput + " ("));
+        var c_st = d.createElement("strong");
+        var nlis = d.getElementById("numLinesInScreen");
+        nlis.style.display = "inline";
+        c_st.appendChild(nlis);
+        c_lg.appendChild(c_st);
+        c_lg.appendChild(d.createTextNode(" " + m.lines + ")"));
+        c_fs.appendChild(c_lg);
+    
+        var c_ul = d.createElement("ul");
+    
+        var c_li1 = d.createElement("li");
+        c_li1.onclick = function(){HMUD_UI.clearScreen(1000);};
+        c_li1.appendChild(d.createTextNode(m.preserve1000));
+        c_ul.appendChild(c_li1);
+        var c_li2 = d.createElement("li");
+        c_li2.onclick = function(){HMUD_UI.clearScreen("half");};
+        c_li2.appendChild(d.createTextNode(m.half));
+        c_ul.appendChild(c_li2);
+        var c_li3 = d.createElement("li");
+        c_li3.onclick = function(){HMUD_UI.clearScreen("all");};
+        c_li3.appendChild(d.createTextNode(m.all));
+        c_ul.appendChild(c_li3);
+        c_fs.appendChild(c_ul);
+    
+        om.appendChild(f_fs);
+        om.appendChild(c_fs);
+    
+        om.alreadyCreated = true;
+    },
+
+    saveLog: function () {
+    
+        var ls = document.getElementById("logSave");
+        var lt = document.getElementById("logSaveTA");
+    
+        if (ls.style.display == "none") {
+            var bodyClass = document.body.className.length
+                          ? " class=\"" + document.body.className + "\"" : "";
+            window.disableCmdFocus = true;
+            lt.value = "<html><head><title>hMUD Log</title><style type=\"text/css\">"
+                + document.getElementById("logStyle").innerHTML
+                + "</style><body" + bodyClass + "><pre id=\"output\">"
+                + HMUD_UI.output.innerHTML + "</pre></body></html>";
+            ls.style.display = "block";
+        } else {
+            window.disableCmdFocus = false;
+            lt.value = "";
+            ls.style.display = "none";
+        }
+    },
+
+    showGuide: function (setCookie) {
+        if (HMUD_Guide.length < 1)
+            return;
+
+        if (setCookie)
+            createCookie("showGuide", "yes", 30);
+
+        var d = document;
+        var g = d.getElementById("cmdGuide");
+
+        if (g.guideAlreadyCreated) {
+            g.style.display = "block";
+            return;
+        }
+
+        /* creating table */
+        var cap = d.createElement("div");
+        cap.className = "caption";
+        cap.appendChild(d.createTextNode(m.cmdGuide));
+        g.appendChild(cap);
+        var table = d.createElement("table");
+        g.appendChild(table);
+        var tbody = d.createElement("tbody");
+        table.appendChild(tbody);
+
+        for (var i = 0; i < HMUD_Guide.length; ++i) {
+            var tr1 = d.createElement("tr");
+            tbody.appendChild(tr1);
+            var th = d.createElement("th");
+            tr1.appendChild(th);
+
+            /* section */
+            th.appendChild(d.createTextNode(HMUD_Guide[i][0]));
+
+            /* commands in this section */
+            var commands = HMUD_Guide[i][1];
+            var tr2 = d.createElement("tr");
+            tbody.appendChild(tr2);
+            var td = d.createElement("td");
+            tr2.appendChild(td);
+
+            for (var j = 0; j < commands.length; ++j) {
+                var sp1 = d.createElement("span");
+                sp1.appendChild(d.createTextNode(commands[j][0]));
+                sp1.id = "cmd-name-" + i + "-" + j;
+                sp1.className = "command-name";
+                sp1.onmouseover = function() {
+                    var e = document.getElementById(this.id.replace("cmd-name", "cmd-desc"));
+                    e.style.display = "block";
+
+                    var p = findPos(this, g);
+                    var top = p[1] + this.offsetHeight;
+                    e.style.top = (p[1] + this.offsetHeight) + "px";
+                    if ((findPos(e)[1] + e.offsetHeight) > (findPos(HMUD_UI.output)[1] + HMUD_UI.output.offsetHeight))
+                        e.style.top = (p[1] - e.offsetHeight) + "px";
+                };
+                sp1.onmouseout = function() {
+                    var e = document.getElementById(this.id.replace("cmd-name", "cmd-desc"));
+                    e.style.display = "none";
+                };
+                sp1.onclick = function() { HMUD_UI.cmdline.value += this.firstChild.nodeValue + " "; };
+                td.appendChild(sp1);
+                td.appendChild(d.createTextNode(" "));
+
+                var sp2 = d.createElement("span");
+                sp2.appendChild(d.createTextNode(commands[j][1]));
+                sp2.id = "cmd-desc-" + i + "-" + j;
+                sp2.style.display = "none";
+                sp2.className = "command-description";
+                td.appendChild(sp2);
+                td.appendChild(d.createTextNode(" "));
+            }
+        }
+
+        g.guideAlreadyCreated = true;
+        g.style.display = "block";
+        HMUD_UI.rearrange();
+    },
+
+    hideGuide: function(setCookie) {
+        document.getElementById("cmdGuide").style.display = "none";
+        if (setCookie)
+            createCookie("showGuide", "no", 30);
+    }
+};
+
+function getViewportDimensions() {
+    var intH = 0, intW = 0;
+    
+    if(self.innerHeight) {
+       intH = window.innerHeight;
+       intW = window.innerWidth;
+    } 
+    else {
+        if(document.documentElement && document.documentElement.clientHeight) {
+            intH = document.documentElement.clientHeight;
+            intW = document.documentElement.clientWidth;
+        }
+        else {
+            if(document.body) {
+                intH = document.body.clientHeight;
+                intW = document.body.clientWidth;
+            }
+        }
+    }
+
+    return {
+        height: parseInt(intH, 10),
+        width: parseInt(intW, 10)
+    };
+}
+
+function findPos(obj, stopAt)
+{
+    var curleft = 0;
+    var curtop = 0;
+
+    if (obj.offsetParent)
+        do
+        {
+            if (obj == stopAt)
+                break;
+            curleft += obj.offsetLeft;
+            curtop += obj.offsetTop;
+        }
+        while (obj = obj.offsetParent);
+
+    return [curleft,curtop];
+}
 
