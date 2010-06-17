@@ -9,38 +9,14 @@ TODO:
 - better telnet parsing
 - better modularization
 - Multiple commands separated by ';' (or maybe a multiline textarea when doing SHIFT+ENTER)
-
-Done:
-
-2009-07-30:
-
-* Now the cursor is being correctly placed at the end of the text when
-  navigating through history. (Chrome, Firefox and Explorer).
-* Quick help for commands (guide.js)
-* save command guide state (visible or not) in user's cookie
-
-2009-07-28:
-
-* Title alert when window is out of focus (improved, it was not working
-  perfectly).
-* Font selection: Courier or Fixedsys.
-* Scrollbar glitch in IE.
-* Scroll lock with visual sign.
-* Better modularization (incomplete).
-* Layout adjusts.
-* Slight improvements on color parsing and output generation.
-
-2009-01-16:
-
-* Prewrap is not working in FF3, I think that's because of the &nbsp;'s
-  generated in AnsiToHtml.hx. One idea is creating a variable in the browser
-  telling if it's IE or not, then Flash can access it and know if it will
-  or will not output the &nbsp;'s characters (they are necessary to make
-  the output work properly in IE).
-* connect/disconnect/reconnect options in connection status icon
-* line counter of the output window
-* clear output window (everything, half or a number of lines)
-* Make copy and paste work (when selecting text do not focus the command input)
-* history navigation (by pressing up/down arrow)
-* swap text input with password input when echo_off
+- Implement a better way of knowing when the server is asking for password,
+  instead os relying on Telnet echo commands. So that, even when echo is off on
+  the client side the commands will still be added to the history normally.
+  Only sensitive data (password) would be treated differently.
+  Suggestions:
+    - create an option echoOnByServerIsPassword (true or false)
+      so that servers that use echo for other things will have it disabled.
+    - create option passwordRegexp = /^Password:/ that will check
+      when the server asks for password and swap the command line with
+      a password input field.
 
