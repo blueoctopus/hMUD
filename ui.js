@@ -120,9 +120,16 @@ var HMUD_UI = {
                 this.value = HMUD_History.next();
             }
         };
-        this.cmdline.onkeyup = function() {
+        this.cmdline.onkeyup = function(e) {
             /* place the cursor at the end of the text */
-            this.value += "";
+            e = e || window.event;
+
+            if (e.keyCode == 38) { // 38 = Up
+                this.value += "";
+            }
+            else if (e.keyCode == 40) { // 40 = Down
+                this.value += "";
+            }
         };
         this.cmdline.focus();
 
@@ -141,6 +148,8 @@ var HMUD_UI = {
             HMUD_History.add(cmd);
         }
         HMUD_Client.command(cmd);
+        if (c.forceScrollOnCmd)
+            this.scrollBottom();
     },
 
     scrollBottom: function () {
@@ -199,11 +208,6 @@ var HMUD_UI = {
             cLines = this.lineCount - l;
         else
             return;
-
-        /*
-        for (var i = 0; i < cLines && this.output.firstChild; ++i)
-            this.output.removeChild(this.output.firstChild);
-        */
 
         cLines = this.removeLines(this.output, cLines);
         this.updateLineCount(this.lineCount - cLines);
@@ -296,7 +300,7 @@ var HMUD_UI = {
         var guide = document.getElementById("cmdGuide");
         if (guide.style.display != "none") {
             p = findPos(c);
-            guide.style.top = (p[1] - guide.offsetHeight) + "px";
+            guide.style.top = (p[1] - guide.offsetHeight - 20) + "px";
         }
     },
 
@@ -614,14 +618,14 @@ var HMUD_Menu = {
             g_fs.appendChild(g_lg);
             var g_ul = d.createElement("ul");
             g_fs.appendChild(g_ul);
+
+            var g_li1 = d.createElement("li");
+            g_li1.onclick = function(){HMUD_Menu.showGuide(true);};
+            g_li1.appendChild(d.createTextNode(m.cmdGuide));
+            g_ul.appendChild(g_li1);
+            om.appendChild(g_fs);
         }
     
-        var g_li1 = d.createElement("li");
-        g_li1.onclick = function(){HMUD_Menu.showGuide(true);};
-        g_li1.appendChild(d.createTextNode(m.cmdGuide));
-        g_ul.appendChild(g_li1);
-        om.appendChild(g_fs);
-
         /* font fieldset */
         var f_fs = d.createElement("fieldset");
         var f_lg = d.createElement("legend");
@@ -646,6 +650,10 @@ var HMUD_Menu = {
         f_li4.onclick = function(){HMUD_UI.selectFont('font-monospace', true);};
         f_li4.appendChild(d.createTextNode("Monospace"));
         f_ul.appendChild(f_li4);
+        var f_li5 = d.createElement("li");
+        f_li5.onclick = function(){HMUD_UI.selectFont('font-terminal', true);};
+        f_li5.appendChild(d.createTextNode("Terminal"));
+        f_ul.appendChild(f_li5);
         f_fs.appendChild(f_ul);
     
         /* clear screen fieldset */
