@@ -27,7 +27,7 @@ var HMUD_Guide = [
         "Comunicação",
         [
             ["falar", "Fala. Apenas digite FALAR <mensagem>. As pessoas que estiverem na mesma sala que você receberão a mensagem."],
-            ["contar", "Conta algo para alguém. Ou seja, é uma conversa em particular. Use FALAR <pessoa> <mensagem>."],
+            ["contar", "Conta algo para alguém. Ou seja, é uma conversa em particular. Use CONTAR <pessoa> <mensagem>."],
             ["tagarelar", "Envia uma mensagem para todas os jogadores."]
         ]
     ],
