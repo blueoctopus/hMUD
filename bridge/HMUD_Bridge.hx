@@ -165,10 +165,27 @@ class HMUD_Bridge {
     	if (socket.connected) {
             var iac = ~/\xFF/g;
             var nl = ~/[\r\n]/g;
-            msg = iac.replace(msg, "\xFF\xFF"); /* doubling IAC character (Telnet Protocol) */
+
+            msg = iac.replace(msg, "\xFF\xFF");	/* doubling IAC character (Telnet Protocol) */
             msg = nl.replace(msg, "");		/* removing newlines */
+            msg += "\r\n";			/* appending newline */
             trace("Writing '" + msg + "' to server");
-            socket.writeMultiByte(msg + "\r\n", "iso-8859-1");
+
+            /*
+             * Flash 10 on Linux: socket.writeMultiByte is *broken*.
+             * So here we use this nasty hack from
+             * http://www.flexiblefactory.co.uk/flexible/?p=75
+             * 
+             * Flash 9 works fine on all platforms, I just hope this will be fixed
+             * on Flash 11, so this test just checks for version 10.
+             */
+            var flash10OnLinux = ~/^LNX 10,/.match(flash.system.Capabilities.version);
+            var i = 0;
+            if (flash10OnLinux)
+                for (i in 0 ... msg.length)
+                    socket.writeByte(msg.charCodeAt(i));
+            else
+                socket.writeMultiByte(msg, "iso-8859-1");
             socket.flush();
         } else {
             trace("Cannot write to server because there is no connection!");		
